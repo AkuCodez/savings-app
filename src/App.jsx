@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Target,
   Plus,
@@ -14,6 +14,20 @@ import {
   RotateCcw,
   Pencil,
 } from "lucide-react";
+
+function load(key, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function save(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch {}
+}
 
 // ─── Keyword Maps ─────────────────────────────────────────────────────────────
 const WANT_KEYWORDS = [
@@ -517,13 +531,23 @@ function InvestmentNudge({ wantSaved }) {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [goal, setGoal] = useState(50000);
-  const [balance, setBalance] = useState(0);
-  const [txns, setTxns] = useState([]);
+  const [goal, setGoal] = useState(() => load("sv_goal", 50000));
+  const [balance, setBalance] = useState(() => load("sv_balance", 0));
+  const [txns, setTxns] = useState(() => load("sv_txns", []));
   const [form, setForm] = useState({ amount: "", desc: "", intent: "Need" });
   const [showForm, setShowForm] = useState(false);
   const [lastAdded, setLastAdded] = useState(null);
   const [showReset, setShowReset] = useState(false);
+
+  useEffect(() => {
+    save("sv_goal", goal);
+  }, [goal]);
+  useEffect(() => {
+    save("sv_balance", balance);
+  }, [balance]);
+  useEffect(() => {
+    save("sv_txns", txns);
+  }, [txns]);
 
   const totalSpent = useMemo(
     () => txns.reduce((s, t) => s + t.amount, 0),
